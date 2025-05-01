@@ -132,8 +132,15 @@ namespace BeautyPlatform.Areas.Identity.Pages.Account
                     else
                     {
                         await _signInManager.SignInAsync(user, isPersistent: false);
+
+                        if (Input.IsVendor)
+                        {
+                            return RedirectToAction("CreateBusiness", "Vendor");
+                        }
+
                         return LocalRedirect(returnUrl);
                     }
+
                 }
 
                 foreach (var error in result.Errors)

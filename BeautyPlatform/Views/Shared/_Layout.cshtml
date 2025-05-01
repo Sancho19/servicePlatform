@@ -30,19 +30,20 @@
 
                     <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
                         <ul class="navbar-nav text-center">
-                            <li class="nav-item position-relative">
-                                <a class="nav-link text-white nav-custom position-relative" asp-controller="Customer" asp-action="Cart">
-                                    <i class="bi bi-cart"></i> Cart
-                                    <span id="cart-count-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; display: none;">
-                                        0
-                                    </span>
-                                </a>
+                           
 
-
-                            </li>
-
-                            @if (User.IsInRole("Vendor"))
+                            @if (User.IsInRole("Vendor") || User.IsInRole("Customer"))
                             {
+                                <li class="nav-item position-relative">
+                                    <a class="nav-link text-white nav-custom position-relative" asp-controller="Customer" asp-action="Cart">
+                                        <i class="bi bi-cart"></i> Cart
+                                        <span id="cart-count-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; display: none;">
+                                            0
+                                        </span>
+                                    </a>
+
+
+                                </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-white nav-custom" asp-controller="Vendor" asp-action="Dashboard">Dashboard</a>
                                 </li>

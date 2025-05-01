@@ -4,28 +4,42 @@
     ViewData["Title"] = "Create Your Business";
 }
 
-<h2>Create Your Business</h2>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-5">
+                    <h2 class="mb-4 fw-bold text-center text-primary">Create Your Business</h2>
 
-<form asp-action="CreateBusiness" method="post" enctype="multipart/form-data">
-    <div class="form-group">
-        <label asp-for="BusinessName"></label>
-        <input asp-for="BusinessName" class="form-control" />
-        <span asp-validation-for="BusinessName" class="text-danger"></span>
+                    <form asp-action="CreateBusiness" method="post" enctype="multipart/form-data" novalidate>
+                        <div class="mb-4">
+                            <label asp-for="BusinessName" class="form-label fw-semibold">Business Name</label>
+                            <input asp-for="BusinessName" class="form-control form-control-lg" placeholder="e.g., Beauty by Mia" />
+                            <span asp-validation-for="BusinessName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                            <textarea asp-for="Description" rows="4" class="form-control" placeholder="Tell us about your business..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="ImageUrl" class="form-label fw-semibold">Upload Business </label>
+                            <input type="file" name="ImageFile" class="form-control" accept="image/png, image/jpeg, image/jpg" />
+                            <small class="text-muted">Accepted formats: .jpg, .jpeg, .png</small>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="bi bi-save me-1"></i> Create My Business
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="form-group">
-        <label asp-for="Description"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="ImageUrl"></label>
-        <input type="file" name="ImageFile" class="form-control" accept="image/png, image/jpeg, image/jpg" />
-       
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save</button>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
