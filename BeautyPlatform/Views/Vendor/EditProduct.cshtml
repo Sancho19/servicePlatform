@@ -1,0 +1,126 @@
+﻿@model BeautyPlatform.Models.Product
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb p-2 rounded-3 align-items-center">
+        <li class="breadcrumb-item d-flex align-items-center">
+            <i class="bi bi-house-door me-1"></i>
+            <a href="/" class="text-decoration-none text-dark">Home</a>
+        </li>
+        <li class="breadcrumb-item d-flex align-items-center">
+            <i class="bi bi-speedometer2 me-2">
+                </i>
+            <a href="/Vendor/Dashboard" class="text-decoration-none text-dark">Dashboard</a>
+        </li>
+        
+        <li class="breadcrumb-item active text-success d-flex align-items-center" aria-current="page">
+            <i class="bi bi-pencil-square me-2"></i>
+            Edit Product
+        </li>
+    </ol>
+</nav>
+
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+    <div class="card shadow-lg p-3">
+        <h2 class="text-center mb-4 fs-4">Update Product Details</h2> <!-- Reduced font size of heading -->
+
+        <form asp-action="EditProduct" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ImageUrl" />
+
+            <!-- Product Name -->
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fs-6">Product Name</label> <!-- Reduced font size -->
+                <input asp-for="Name" class="form-control form-control-sm" placeholder="Enter product name" /> <!-- Smaller input field -->
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <!-- Product Description -->
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fs-6">Description</label> <!-- Reduced font size -->
+                <textarea asp-for="Description" class="form-control form-control-sm" placeholder="Describe your product" rows="4"></textarea> <!-- Smaller input field -->
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <!-- Product Price -->
+            <div class="mb-3">
+                <label asp-for="Price" class="form-label fs-6">Price</label> <!-- Reduced font size -->
+                <input asp-for="Price" class="form-control form-control-sm" placeholder="Enter price" /> <!-- Smaller input field -->
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+
+            <!-- Image Preview Row -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <!-- Current Image -->
+                    <div>
+                        <label class="fs-6">Current Image</label> <!-- Reduced font size -->
+                        <br />
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <img id="currentImage" src="@Model.ImageUrl" alt="Current Image" class="img-thumbnail" style="max-width: 150px; height: auto;" />
+                        }
+                        else
+                        {
+                            <p>No current image</p>
+                        }
+                    </div>
+
+                    <!-- Arrow Icon for Image Swap -->
+                    <div id="arrowContainer" style="display: none;">
+                        <i class="bi bi-arrow-left-right fs-3 mx-3"></i> <!-- Reduced icon size -->
+                    </div>
+
+                    <!-- New Image Preview -->
+                    <div id="previewContainer" style="display: none;">
+                        <label class="fs-6">New Image Preview</label> <!-- Reduced font size -->
+                        <br />
+                        <img id="previewImage" src="#" alt="New Preview" class="img-thumbnail" style="max-width: 150px; height: auto;" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload New Image -->
+            <div class="mb-4">
+                <label asp-for="ImageFile" class="form-label fs-6">Upload New Image (Optional)</label> <!-- Reduced font size -->
+                <input asp-for="ImageFile" type="file" class="form-control form-control-sm" id="ImageFileInput" />
+            </div>
+
+                    <!-- Submit & Back Buttons -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/Vendor/Dashboard" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+                        <button type="submit" class="btn btn-primary btn-sm px-5">Save Changes</button>
+                    </div>
+
+        </form>
+    </div>
+    </<div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('ImageFileInput').addEventListener('change', function (e) {
+            const fileInput = e.target;
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImage = document.getElementById('previewImage');
+            const arrowContainer = document.getElementById('arrowContainer');
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    arrowContainer.style.display = 'block'; // Show exchange arrow
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                previewContainer.style.display = 'none';
+                arrowContainer.style.display = 'none';
+            }
+        });
+    </script>
+}

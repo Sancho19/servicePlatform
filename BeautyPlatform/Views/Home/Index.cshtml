@@ -1,0 +1,67 @@
+﻿@model IEnumerable<BeautyPlatform.Models.BusinessProfile>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+<div class="container">
+<!-- Hero Section -->
+<section class="text-center py-5 ">
+    <div class="text-black">
+        <h1 class="display-4 fw-bold">Discover Local Gems</h1>
+        <p class="lead">Shop products and book services being offered around you.</p>
+        <a href="#explore" class="btn btn-primary btn-lg mt-3">Explore Now</a>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section id="services" class="py-5">
+    <h2 class="text-center mb-5">Our Categories</h2>
+    <div class="row justify-content-center">
+        @foreach (var category in new[] { "Hair Salons", "Nail Artists", "Beauty Products", "Skin Care", "Makeup Services", "Barber Shops" })
+        {
+            <div class="col-6 col-md-3 mb-4">
+                <div class="card text-center shadow-lg border-0 h-100">
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <p class="mb-0 fw-bold">@category</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+</section>
+
+<!-- Featured Businesses Section -->
+<section id="explore" class="py-5">
+    <h2 class="text-center mb-5">Explore Businesses</h2>
+    <div class="row">
+        @foreach (var business in Model)
+        {
+                <div class="col-md-4 mb-4">
+                    <a asp-action="BusinessDetails" asp-route-id="@business.Id" style="text-decoration: none; color: inherit;">
+                        <div class="card h-100 shadow-sm">
+                            @if (!string.IsNullOrEmpty(business.ImageUrl))
+                            {
+                                <img src="@business.ImageUrl" class="card-img-top" alt="@business.BusinessName" style="height: 200px; object-fit: cover;">
+                            }
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold">@business.BusinessName</h5>
+                                <p class="card-text">@business.Description</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+        }
+    </div>
+</section>
+
+<!-- Join Us Section -->
+<section id="join" class="py-5 text-center">
+    <div class="container">
+        <h2 class="mb-4 fw-bold">Own a Business?</h2>
+        <p class="lead mb-4">Join Vouge Hub to showcase your products or services and reach thousands of nearby customers!</p>
+        <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">SignUp</a>
+    </div>
+</section>
+</div>

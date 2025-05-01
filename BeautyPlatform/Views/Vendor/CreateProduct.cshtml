@@ -1,0 +1,74 @@
+﻿@model BeautyPlatform.Models.Product
+
+@{
+    ViewData["Title"] = "Add Product";
+}
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb p-2 rounded-3 align-items-center">
+        <li class="breadcrumb-item d-flex align-items-center">
+            <i class="bi bi-house-door me-1"></i>
+            <a href="/" class="text-decoration-none text-dark">Home</a>
+        </li>
+        <li class="breadcrumb-item d-flex align-items-center">
+            <i class="bi bi-speedometer2 me-1"></i>
+            <a href="/Vendor/Dashboard" class="text-decoration-none text-dark">Dashboard</a>
+        </li>
+        <li class="breadcrumb-item active text-success d-flex align-items-center" aria-current="page">
+            <i class="bi bi-plus-circle me-1"></i>
+            Create Product
+        </li>
+    </ol>
+</nav>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg p-3">
+                <h2 class="text-center mb-4 fs-4">Add New Product</h2>
+
+                <form asp-action="CreateProduct" asp-route-businessId="@ViewData["BusinessId"]" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="BusinessProfileId" value="@ViewData["BusinessId"]" />
+
+                    <!-- Product Name -->
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label fs-6">Product Name</label>
+                        <input asp-for="Name" class="form-control form-control-sm" placeholder="Enter product name" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fs-6">Description</label>
+                        <textarea asp-for="Description" class="form-control form-control-sm" rows="4" placeholder="Enter a brief description"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="mb-3">
+                        <label asp-for="Price" class="form-label fs-6">Price</label>
+                        <input asp-for="Price" class="form-control form-control-sm" type="number" step="0.01" placeholder="Enter price" />
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="mb-4">
+                        <label for="ImageFile" class="form-label fs-6">Product Image</label>
+                        <input type="file" name="ImageFile" class="form-control form-control-sm" accept="image/png, image/jpeg" />
+                        <div class="form-text">Accepted formats: .jpg, .png</div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/Vendor/Dashboard" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+                        <button type="submit" class="btn btn-primary btn-sm px-5">Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

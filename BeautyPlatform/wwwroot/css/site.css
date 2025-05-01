@@ -1,0 +1,185 @@
+html {
+    font-size: 14px;
+    
+}
+/* Add this to your site.css or BeautyPlatform.styles.css */
+main {
+    margin-top: 60px; /* Adjust this based on your navbar height */
+}
+
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+    main {
+        margin-top: 80px; /* Adjusted for larger screens / desktop navbar height */
+    }
+}
+
+/*.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}*/
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+
+    margin-bottom: 60px;
+}
+
+    body.auth-bg {
+        background: linear-gradient(to right, #f8f9fa, #e3f2fd);
+        min-height: 100vh;
+        display: flex;
+        align-items: center; /* Vertically center the card */
+        justify-content: center; /* Horizontally center the card */
+    }
+
+.auth-card {
+    animation: fadeIn 0.8s ease-in-out;
+    max-width: 700px; /* <-- increased from 300px to 420px */
+   
+    min-width: 350px;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    background-color: white;
+    margin: 0 auto;
+}
+
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+/* Style the IsVendor checkbox for a cleaner and modern look */
+.form-check-input {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    border: 2px solid #ccc;
+    transition: all 0.3s ease;
+}
+
+    /* Hover and Focus Effects */
+    .form-check-input:hover {
+        border-color: #007bff;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+/* Label Styling */
+.form-check-label {
+    font-size: 16px;
+    color: #495057;
+    transition: color 0.3s ease;
+}
+
+    .form-check-label:hover {
+        color: #007bff;
+        cursor: pointer;
+    }
+.nav-pills .nav-link {
+    border: 1px solid black; /* Add a nice thin black border */
+    margin: 0 4px;
+}
+.modal-backdrop.show {
+    backdrop-filter: blur(5px);
+}
+
+    .nav-pills .nav-link.active {
+        background-color: #000 !important; /* Black for active */
+        color: #fff !important; /* White text for active */
+    }
+
+    .nav-pills .nav-link:not(.active) {
+        background-color: #fff !important; /* White for inactive */
+        color: #000 !important; /* Black text for inactive */
+    }
+/* Validation Text Styling */
+.text-danger {
+    font-size: 0.875rem;
+    margin-top: 5px;
+}
+.hover-shadow-lg:hover {
+    transform: translateY(-0.5px);
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.10) !important;
+    transition: all 0.2s ease;
+}
+
+.navbar .nav-link  {
+    color: white !important;
+    text-align:center;
+}
+
+.nav-custom:hover,
+.nav-custom.active {
+    background-color: white !important;
+    color: black !important;
+    border-radius: 0.5rem; /* optional: makes it look smoother */
+    transition: all 0.3s ease;
+}
+
+
+
+.card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.tab-btn {
+    background-color: #f8f9fa; /* Light background */
+    color: #000; /* Black text */
+    border: 1px solid #ced4da;
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 50px; /* Fully rounded pills */
+    outline: none; /* Removes default outline */
+    box-shadow: none; /* Removes blue glow */
+}
+
+    .tab-btn.active {
+        background-color: #000; /* Black background for active */
+        color: #fff; /* White text for active */
+    }
+
+    .tab-btn:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    .tab-btn:hover {
+        background-color: #e2e6ea; /* Slight hover effect */
+        color: #000;
+    }
+
+    .tab-btn.active:hover {
+        background-color: #000; /* Keep black even on hover */
+        color: #fff;
+    }
+input:focus,
+btn:focus,
+select:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #ced4da; /* Optional: keep border clean */
+}
