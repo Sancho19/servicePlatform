@@ -183,3 +183,21 @@ select:focus {
     box-shadow: none !important;
     border-color: #ced4da; /* Optional: keep border clean */
 }
+
+input.qty-input:focus {
+    box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.25);
+    border-color: #86b7fe;
+}
+
+button.btn-light:hover {
+    background-color: #f8f9fa;
+}
+
+button.btn-light:active {
+    background-color: #e2e6ea;
+}
+
+
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}

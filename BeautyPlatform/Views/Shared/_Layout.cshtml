@@ -18,46 +18,64 @@
     @if (ViewData["HideNavbar"] == null || !(bool)ViewData["HideNavbar"])
     {
         <header>
-            <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-black box-shadow py-3 py-md-6 fixed-top">
-
+            <nav class="navbar navbar-expand-lg navbar-dark bg-black fixed-top shadow-sm py-3">
                 <div class="container-fluid">
-                    <a class="navbar-brand fs-3" asp-area="" asp-controller="Home" asp-action="Index">Vouge Hub</a>
+                    <!-- Brand / Logo -->
+                    <a class="navbar-brand fs-3 fw-semibold" asp-area="" asp-controller="Home" asp-action="Index">
+                        Vouge Hub
+                    </a>
 
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <!-- Mobile Toggle -->
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                            aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
 
-                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
-                        <ul class="navbar-nav text-center">
-                           
+                    <!-- Main Nav Items -->
+                    <div class="collapse navbar-collapse" id="mainNavbar">
+                        <ul class="navbar-nav ms-auto align-items-center gap-1">
 
                             @if (User.IsInRole("Vendor") || User.IsInRole("Customer"))
                             {
+                                <!-- Cart -->
                                 <li class="nav-item position-relative">
-                                    <a class="nav-link text-white nav-custom position-relative" asp-controller="Customer" asp-action="Cart">
-                                        <i class="bi bi-cart"></i> Cart
-                                        <span id="cart-count-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; display: none;">
-                                            0
-                                        </span>
+                                    <a class="nav-link text-white d-flex align-items-center gap-1" asp-controller="Customer" asp-action="Cart">
+                                        Cart
+                                        <span id="cart-count-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                              style="font-size: 0.7rem; display: none;">0</span>
                                     </a>
-
-
                                 </li>
+
+                                <!-- Appointments -->
+                                <li class="nav-item position-relative">
+                                    <a class="nav-link text-white d-flex align-items-center gap-1" asp-controller="Customer" asp-action="MyAppointments">
+                                         Appointments
+                                        <span id="appointment-count-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                              style="font-size: 0.7rem; display: none;">0</span>
+                                    </a>
+                                </li>
+
+                                <!-- Dashboard -->
                                 <li class="nav-item">
-                                    <a class="nav-link text-white nav-custom" asp-controller="Vendor" asp-action="Dashboard">Dashboard</a>
+                                    <a class="nav-link text-white d-flex align-items-center gap-1" asp-controller="Vendor" asp-action="Dashboard">
+Dashboard
+                                    </a>
                                 </li>
-                               
                             }
+
+                            <!-- Identity Partial (Login, Logout, Register) -->
+                            <li class="nav-item">
+                                <div class="d-flex align-items-center">
+                                    <partial name="_LoginPartial" />
+                                </div>
+                            </li>
                         </ul>
-                        <partial name="_LoginPartial" />
                     </div>
                 </div>
             </nav>
-
-
-
         </header>
+
+
     }
 
     <div >
@@ -80,7 +98,56 @@
 </html>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        updateCartCount();
+        const currentPath = window.location.pathname.toLowerCase().replace(/\/+$/, ''); // trim trailing slash
+
+        const isCartPage = currentPath === "/customer/cart";
+        const isAppointmentsPage = currentPath === "/customer/myappointments";
+
+        if (!isCartPage) {
+            updateCartCount();
+        } else {
+            hideBadge("cart-count-badge");
+        }
+
+        if (!isAppointmentsPage) {
+            updateAppointmentCount();
+        } else {
+            hideBadge("appointment-count-badge");
+        }
     });
+
+    function updateCartCount() {
+        fetch('/Customer/GetCartCount')
+            .then(res => res.json())
+            .then(data => {
+                const badge = document.getElementById('cart-count-badge');
+                if (badge) {
+                    badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+                    badge.textContent = data.count;
+                }
+            });
+    }
+
+    function updateAppointmentCount() {
+        fetch('/Customer/GetAppointmentCount')
+            .then(res => res.json())
+            .then(data => {
+                const badge = document.getElementById('appointment-count-badge');
+                if (badge) {
+                    badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+                    badge.textContent = data.count;
+                }
+            });
+    }
+
+    function hideBadge(id) {
+        const badge = document.getElementById(id);
+        if (badge) {
+            badge.style.display = 'none';
+        }
+    }
 </script>
+
+
+
 

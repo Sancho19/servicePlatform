@@ -1,0 +1,93 @@
+﻿@model List<BeautyPlatform.Models.Appointment>
+@using System.Linq
+
+@{
+    var grouped = Model
+        .GroupBy(a => a.Service.Id)
+        .Select(g => new
+        {
+            Service = g.First().Service,
+            Appointments = g.ToList(),
+            Count = g.Count(),
+            Earliest = g.Min(a => a.AppointmentDateTime),
+            TotalPrice = g.Sum(a => a.Service.Price)
+        })
+        .ToList();
+
+    decimal grandTotal = grouped.Sum(x => x.TotalPrice);
+}
+
+<div class="container my-5">
+    <h2 class="text-center mb-4 fw-semibold">My Appointments</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success text-center">@TempData["Success"]</div>
+    }
+
+    @if (!grouped.Any())
+    {
+        <div class="text-center text-muted">
+            <p>You have no upcoming appointments.</p>
+            <a href="/" class="btn btn-primary rounded-pill mt-2">Book a Service</a>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+            @foreach (var item in grouped)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-4">
+                                <img src="@item.Service.ImageUrl"
+                                     alt="@item.Service.Name"
+                                     class="img-fluid rounded-start"
+                                     style="height: 100%; object-fit: cover;" />
+                            </div>
+                            <div class="col-8">
+                                <div class="card-body">
+                                    <h5 class="card-title fw-bold text-primary">@item.Service.Name</h5>
+                                    <p class="card-text text-muted">@item.Service.Description</p>
+                                    <p class="card-text mb-1">
+                                        <strong>Next Date:</strong> @item.Earliest.ToString("dddd, dd MMMM yyyy")<br />
+                                        <strong>Time:</strong> @item.Earliest.ToString("hh:mm tt")
+                                    </p>
+                                    @if (item.Count > 1)
+                                    {
+                                        <p class="text-warning fw-bold mb-2">
+                                            Booked @item.Count times – <span class="text-dark">@item.TotalPrice.ToString("C")</span>
+                                        </p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-success fw-bold mb-2">@item.TotalPrice.ToString("C")</p>
+                                    }
+
+                                    <!-- Cancel buttons for each appointment -->
+                                    @foreach (var appt in item.Appointments)
+                                    {
+                                        <form method="post" asp-action="CancelAppointment" asp-controller="Customer" class="mb-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="appointmentId" value="@appt.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                Cancel @appt.AppointmentDateTime.ToString("dd MMM, hh:mm tt")
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="text-end pe-2">
+            <h4 class="fw-bold">Total Amount Due: @grandTotal.ToString("C")</h4>
+        </div> <a href="/Checkout" class="btn btn-success btn-lg">
+            Checkout <i class="bi bi-arrow-right"></i>
+        </a>
+    }
+</div>
