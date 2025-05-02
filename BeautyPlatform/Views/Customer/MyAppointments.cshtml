@@ -2,6 +2,13 @@
 @using System.Linq
 
 @{
+    ViewData["Title"] = "My Appointments";
+
+    var businesses = Model
+        .Select(a => a.Service.BusinessProfile)
+        .DistinctBy(b => b.Id)
+        .ToList();
+
     var grouped = Model
         .GroupBy(a => a.Service.Id)
         .Select(g => new
@@ -16,16 +23,15 @@
 
     decimal grandTotal = grouped.Sum(x => x.TotalPrice);
 }
-
 <div class="container my-5">
-    <h2 class="text-center mb-4 fw-semibold">My Appointments</h2>
+    <h2 class="text-center mb-4 fw-semibold" style="margin-top: 80px;">My Appointments</h2>
 
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success text-center">@TempData["Success"]</div>
     }
 
-    @if (!grouped.Any())
+    @if (!Model.Any())
     {
         <div class="text-center text-muted">
             <p>You have no upcoming appointments.</p>
@@ -34,10 +40,24 @@
     }
     else
     {
-        <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+        <!-- Filter Tabs -->
+        <ul class="nav nav-pills justify-content-center mb-4" id="appointmentTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-business-id="all" type="button">All</button>
+            </li>
+            @foreach (var biz in businesses)
+            {
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-business-id="@biz.Id">@biz.BusinessName</button>
+                </li>
+            }
+        </ul>
+
+        <div class="row row-cols-1 row-cols-md-2 g-4 mb-5" id="appointmentsContainer">
             @foreach (var item in grouped)
             {
-                <div class="col">
+                var businessId = item.Service.BusinessProfileId;
+                <div class="col appointment-card" data-business-id="@businessId">
                     <div class="card h-100 shadow-sm border-0">
                         <div class="row g-0 align-items-center">
                             <div class="col-4">
@@ -50,10 +70,12 @@
                                 <div class="card-body">
                                     <h5 class="card-title fw-bold text-primary">@item.Service.Name</h5>
                                     <p class="card-text text-muted">@item.Service.Description</p>
-                                    <p class="card-text mb-1">
+
+                                    <p class="card-text mb-2">
                                         <strong>Next Date:</strong> @item.Earliest.ToString("dddd, dd MMMM yyyy")<br />
                                         <strong>Time:</strong> @item.Earliest.ToString("hh:mm tt")
                                     </p>
+
                                     @if (item.Count > 1)
                                     {
                                         <p class="text-warning fw-bold mb-2">
@@ -65,16 +87,27 @@
                                         <p class="text-success fw-bold mb-2">@item.TotalPrice.ToString("C")</p>
                                     }
 
-                                    <!-- Cancel buttons for each appointment -->
-                                    @foreach (var appt in item.Appointments)
+                                    <div class="mb-2"><strong>Bookings:</strong></div>
+                                    @foreach (var appt in item.Appointments.OrderBy(a => a.AppointmentDateTime))
                                     {
-                                        <form method="post" asp-action="CancelAppointment" asp-controller="Customer" class="mb-2">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="appointmentId" value="@appt.Id" />
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                Cancel @appt.AppointmentDateTime.ToString("dd MMM, hh:mm tt")
-                                            </button>
-                                        </form>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span>
+                                                @appt.AppointmentDateTime.ToString("dd MMM, hh:mm tt")
+                                                <span class="badge @(appt.Status == "Confirmed" ? "bg-success" : "bg-warning text-dark")">
+                                                    @appt.Status
+                                                </span>
+                                            </span>
+                                            <div class="d-flex gap-2">
+                                                <form method="post" asp-action="CancelAppointment" asp-controller="Customer" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="appointmentId" value="@appt.Id" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+                                                </form>
+                                                <a asp-action="Reschedule" asp-route-id="@appt.Id" class="btn btn-outline-primary btn-sm">
+                                                    Reschedule
+                                                </a>
+                                            </div>
+                                        </div>
                                     }
                                 </div>
                             </div>
@@ -86,8 +119,31 @@
 
         <div class="text-end pe-2">
             <h4 class="fw-bold">Total Amount Due: @grandTotal.ToString("C")</h4>
-        </div> <a href="/Checkout" class="btn btn-success btn-lg">
+        </div>
+        <a href="/Checkout" class="btn btn-success btn-lg">
             Checkout <i class="bi bi-arrow-right"></i>
         </a>
     }
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('#appointmentTabs button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('#appointmentTabs button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const selectedId = this.getAttribute('data-business-id');
+
+                document.querySelectorAll('.appointment-card').forEach(card => {
+                    const bizId = card.getAttribute('data-business-id');
+                    if (selectedId === "all" || bizId === selectedId) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+}

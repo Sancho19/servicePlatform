@@ -1,0 +1,66 @@
+﻿@model List<BeautyPlatform.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Service Appointments";
+}
+
+<div class="container my-5">
+    <h2 class="text-center fw-bold mb-4" style="margin-top: 80px;">Service Appointments</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success text-center">@TempData["Success"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="text-center text-muted">No appointments found.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle table-bordered table-striped shadow-sm rounded overflow-hidden">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Customer</th>
+                        <th>Service</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th style="min-width: 160px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var appt in Model)
+                    {
+                        <tr class="text-center">
+                            <td class="fw-semibold">@appt.User.FullName</td>
+                            <td>@appt.Service.Name</td>
+                            <td>@appt.AppointmentDateTime.ToString("dd MMM yyyy")</td>
+                            <td>@appt.AppointmentDateTime.ToString("hh:mm tt")</td>
+                            <td>
+                                <span class="badge rounded-pill bg-@(appt.Status == "Confirmed" ? "success" : "warning") px-3 py-2">
+                                    @appt.Status
+                                </span>
+                            </td>
+                            <td>
+                                <form asp-action="UpdateAppointmentStatus" method="post" class="d-flex align-items-center justify-content-center gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="appointmentId" value="@appt.Id" />
+                                    <select name="newStatus" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="Pending" selected="@(appt.Status == "Pending")">Pending</option>
+                                        <option value="Confirmed" selected="@(appt.Status == "Confirmed")">Confirmed</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="submit">
+                                        Save
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    }
+</div>

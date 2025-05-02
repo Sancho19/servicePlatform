@@ -67,6 +67,34 @@ namespace BeautyPlatform.Controllers
 
             return View(businesses);
         }
+        [HttpGet]
+        public async Task<IActionResult> ViewAppointments()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var appointments = await _context.Appointments
+                .Include(a => a.User)
+                .Include(a => a.Service)
+                .Where(a => a.Service.BusinessProfile.UserId == user.Id)
+                .OrderBy(a => a.AppointmentDateTime)
+                .ToListAsync();
+
+            return View(appointments);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateAppointmentStatus(int appointmentId, string newStatus)
+        {
+            var appointment = await _context.Appointments.FindAsync(appointmentId);
+            if (appointment == null) return NotFound();
+
+            appointment.Status = newStatus;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Appointment status updated successfully.";
+            return RedirectToAction("ViewAppointments");
+        }
 
 
         // GET: /Vendor/CreateProduct

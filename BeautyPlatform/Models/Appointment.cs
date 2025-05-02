@@ -20,5 +20,7 @@ namespace BeautyPlatform.Models
 
         
         public DateTime AppointmentDateTime { get; set; }
+
+        public string Status { get; set; } = "Pending";
     }
 }

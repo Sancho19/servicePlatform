@@ -124,17 +124,30 @@ body {
     transition: all 0.2s ease;
 }
 
-.navbar .nav-link  {
-    color: white !important;
-    text-align:center;
+/* Full-width hover for mobile, subtle hover on desktop */
+.navbar .nav-link.nav-custom {
+    display: block;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+    text-align: center;
 }
 
-.nav-custom:hover,
-.nav-custom.active {
-    background-color: white !important;
-    color: black !important;
-    border-radius: 0.5rem; /* optional: makes it look smoother */
-    transition: all 0.3s ease;
+@media (max-width: 991.98px) {
+    .navbar .nav-link.nav-custom:hover {
+        background-color: white !important;
+        color: black !important;
+        width: 100%;
+        border-radius: 0.5rem !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .navbar .nav-link.nav-custom:hover {
+        background-color: white !important;
+        color: black !important;
+        border-radius: 0.5rem !important;
+    }
 }
 
 

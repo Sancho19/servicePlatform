@@ -23,15 +23,17 @@ namespace BeautyPlatform.Controllers
         [Authorize]
         public async Task<IActionResult> MyAppointments()
         {
-            var userId = _userManager.GetUserId(User);
+            var user = await _userManager.GetUserAsync(User);
 
             var appointments = await _context.Appointments
                 .Include(a => a.Service)
-                .Where(a => a.UserId == userId)
-                .OrderBy(a => a.AppointmentDateTime)
+                    .ThenInclude(s => s.BusinessProfile)
+                .Include(a => a.User)
+                .Where(a => a.UserId == user.Id)
                 .ToListAsync();
 
             return View(appointments);
+
         }
 
 
