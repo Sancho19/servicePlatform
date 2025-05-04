@@ -94,12 +94,15 @@
             @RenderBody()
         </main>
     </div>
+    @if (Context.Request.Path == "/")
+    {
+        <footer class="border-top footer text-muted text-center">
+            <div class="container">
+                Vouge Hub &copy; 2025 - Developed by WebCraft Solutions
+            </div>
+        </footer>
+    }
 
-    <footer class="border-top footer text-muted text-center ">
-        <div class="container">
-            Vouge Hub &copy; 2025 - Developed by WebCraft Solutions
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
    
     <script src="~/js/site.js" asp-append-version="true"></script>

@@ -69,7 +69,7 @@
                                 <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
                                     <div class="d-flex justify-content-between justify-content-md-end align-items-center gap-3">
                                         <div>
-                                            <strong id="item-total-@item.Id" class="text-success fs-5">
+                                            <strong id="item-total-@item.Id" class="text- fs">
                                                 @((item.Product.Price * item.Quantity).ToString("C"))
                                             </strong>
                                         </div>
@@ -92,7 +92,7 @@
             <div class="bg-white border-top shadow-sm mt-4 pt-4 pb-3 sticky-bottom">
                 <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <h4 class="mb-0 fw-bold">
-                        Total: <span class="text-success" id="grand-total">@grandTotal.ToString("C")</span>
+                        Total: <span id="grand-total">@grandTotal.ToString("C")</span>
                     </h4>
                     <a href="/Checkout" class="btn btn-success btn-lg rounded-pill px-4">
                         Checkout <i class="bi bi-arrow-right"></i>
@@ -104,7 +104,7 @@
 
     }
 </div>
-<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
     <div id="toastRemoved" class="toast align-items-center text-white bg-danger border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
             <div class="toast-body fw-semibold">

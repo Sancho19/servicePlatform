@@ -22,5 +22,7 @@ namespace BeautyPlatform.Models
         public DateTime AppointmentDateTime { get; set; }
 
         public string Status { get; set; } = "Pending";
+        public string PaymentMethod { get; set; } = "Unpaid"; // Options: Unpaid, Cash, Online
+
     }
 }

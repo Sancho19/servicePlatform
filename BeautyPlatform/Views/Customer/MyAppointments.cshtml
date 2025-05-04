@@ -4,27 +4,27 @@
 @{
     ViewData["Title"] = "My Appointments";
 
-    var businesses = Model
-        .Select(a => a.Service.BusinessProfile)
-        .DistinctBy(b => b.Id)
+    var sortedAppointments = Model
+        .OrderBy(a => a.Status == "Completed") // false first → non-completed
+        .ThenBy(a => a.AppointmentDateTime)
         .ToList();
 
-    var grouped = Model
-        .GroupBy(a => a.Service.Id)
+    var confirmedAppointments = Model
+        .Where(a => a.Status == "Confirmed" && a.PaymentMethod == "Unpaid")
+        .ToList();
+
+    var confirmedByBusiness = confirmedAppointments
+        .GroupBy(a => a.Service.BusinessProfile)
         .Select(g => new
         {
-            Service = g.First().Service,
-            Appointments = g.ToList(),
-            Count = g.Count(),
-            Earliest = g.Min(a => a.AppointmentDateTime),
-            TotalPrice = g.Sum(a => a.Service.Price)
+            Business = g.Key,
+            Total = g.Sum(a => a.Service.Price),
+            Appointments = g.ToList()
         })
         .ToList();
-
-    decimal grandTotal = grouped.Sum(x => x.TotalPrice);
 }
 <div class="container my-5">
-    <h2 class="text-center mb-4 fw-semibold" style="margin-top: 80px;">My Appointments</h2>
+    <h2 class="text-center mb-4 fw-semibold" style="margin-top: 80px;">My Bookings</h2>
 
     @if (TempData["Success"] != null)
     {
@@ -34,79 +34,70 @@
     @if (!Model.Any())
     {
         <div class="text-center text-muted">
-            <p>You have no upcoming appointments.</p>
-            <a href="/" class="btn btn-primary rounded-pill mt-2">Book a Service</a>
+            <p>You have no appointments.</p>
         </div>
     }
     else
     {
         <!-- Filter Tabs -->
-        <ul class="nav nav-pills justify-content-center mb-4" id="appointmentTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" data-business-id="all" type="button">All</button>
-            </li>
-            @foreach (var biz in businesses)
-            {
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" data-business-id="@biz.Id">@biz.BusinessName</button>
-                </li>
-            }
+        <ul class="nav nav-pills justify-content-center mb-4" id="appointmentTabs">
+            <li class="nav-item"><button class="nav-link active" data-filter="all">All</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="pending">Pending</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="confirmed">Confirmed</button></li>
+            <li class="nav-item"><button class="nav-link" data-filter="completed">Completed</button></li>
         </ul>
 
         <div class="row row-cols-1 row-cols-md-2 g-4 mb-5" id="appointmentsContainer">
-            @foreach (var item in grouped)
+            @foreach (var appt in sortedAppointments)
             {
-                var businessId = item.Service.BusinessProfileId;
-                <div class="col appointment-card" data-business-id="@businessId">
-                    <div class="card h-100 shadow-sm border-0">
+                var service = appt.Service;
+                var business = service.BusinessProfile;
+                <div class="col appointment-card"
+                     data-status="@appt.Status.ToLower()"
+                     data-filter="@appt.Status.ToLower()">
+                    <div class="card h-100 shadow-sm border-0 position-relative">
+
+                        @if (appt.PaymentMethod == "Cash" && appt.Status != "Completed")
+                        {
+                            <span class="position-absolute top-0 end-0 m-4 badge bg-dark text-white">
+                                Will be paid in Cash
+                            </span>
+                        }
+
+
                         <div class="row g-0 align-items-center">
                             <div class="col-4">
-                                <img src="@item.Service.ImageUrl"
-                                     alt="@item.Service.Name"
+                                <img src="@service.ImageUrl"
+                                     alt="@service.Name"
                                      class="img-fluid rounded-start"
                                      style="height: 100%; object-fit: cover;" />
                             </div>
                             <div class="col-8">
                                 <div class="card-body">
-                                    <h5 class="card-title fw-bold text-primary">@item.Service.Name</h5>
-                                    <p class="card-text text-muted">@item.Service.Description</p>
-
+                                    <h6 class="text-muted mb-1">@business.BusinessName</h6>
+                                    <h5 class="card-title fw-bold text-primary">@service.Name</h5>
+                                    <p class="card-text text-muted">@service.Description</p>
                                     <p class="card-text mb-2">
-                                        <strong>Next Date:</strong> @item.Earliest.ToString("dddd, dd MMMM yyyy")<br />
-                                        <strong>Time:</strong> @item.Earliest.ToString("hh:mm tt")
+                                        <strong>Date:</strong> @appt.AppointmentDateTime.ToString("dddd, dd MMM yyyy")<br />
+                                        <strong>Time:</strong> @appt.AppointmentDateTime.ToString("hh:mm tt")<br />
+                                        <strong>Price: @appt.Service.Price.ToString("C")</strong>
                                     </p>
 
-                                    @if (item.Count > 1)
-                                    {
-                                        <p class="text-warning fw-bold mb-2">
-                                            Booked @item.Count times – <span class="text-dark">@item.TotalPrice.ToString("C")</span>
-                                        </p>
-                                    }
-                                    else
-                                    {
-                                        <p class="text-success fw-bold mb-2">@item.TotalPrice.ToString("C")</p>
-                                    }
+                                    <span class="badge
+                        @(appt.Status == "Confirmed" ? "bg-success" :
+                          appt.Status == "Pending" ? "bg-warning text-dark" :
+                          "bg-secondary")">
+                                        @appt.Status
+                                    </span>
 
-                                    <div class="mb-2"><strong>Bookings:</strong></div>
-                                    @foreach (var appt in item.Appointments.OrderBy(a => a.AppointmentDateTime))
+                                    @if (appt.Status != "Completed")
                                     {
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span>
-                                                @appt.AppointmentDateTime.ToString("dd MMM, hh:mm tt")
-                                                <span class="badge @(appt.Status == "Confirmed" ? "bg-success" : "bg-warning text-dark")">
-                                                    @appt.Status
-                                                </span>
-                                            </span>
-                                            <div class="d-flex gap-2">
-                                                <form method="post" asp-action="CancelAppointment" asp-controller="Customer" class="d-inline">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="appointmentId" value="@appt.Id" />
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
-                                                </form>
-                                                <a asp-action="Reschedule" asp-route-id="@appt.Id" class="btn btn-outline-primary btn-sm">
-                                                    Reschedule
-                                                </a>
-                                            </div>
+                                        <div class="d-flex gap-2 mt-3">
+                                            <form method="post" asp-action="CancelAppointment" asp-controller="Customer" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="appointmentId" value="@appt.Id" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+                                            </form>
                                         </div>
                                     }
                                 </div>
@@ -114,36 +105,83 @@
                         </div>
                     </div>
                 </div>
+
             }
         </div>
 
-        <div class="text-end pe-2">
-            <h4 class="fw-bold">Total Amount Due: @grandTotal.ToString("C")</h4>
+    } 
+
+    @* SHOW TOTALS FOR CONFIRMED UNPAID BOOKINGS *@
+    @if (confirmedByBusiness.Any())
+    {
+        <div class="checkout-section">
+            @if (confirmedByBusiness.Count > 1)
+            {
+                <div class="alert alert-info text-center fw-semibold" style="margin-bottom: 7rem;">
+                    You have confirmed bookings with multiple businesses. Please make a separate payment for each.
+                </div>
+            }
+
+            @foreach (var biz in confirmedByBusiness)
+            {
+                <div class="checkout-bar bg-white border-top shadow-sm py-3 px-3 mb-3 d-flex flex-wrap justify-content-between align-items-center gap-3"
+                     style="font-size: 0.95rem;">
+                    <div>
+                        <div class="fw-semibold text-dark" style="font-size: 1rem;">Business:</div>
+                        <div class="fw-bold text-dark">@biz.Business.BusinessName</div>
+                    </div>
+                    <div>
+                        <div class="fw-semibold text-dark" style="font-size: 1rem;">Total Due:</div>
+                        <div class="fw-bold text-dark">@biz.Total.ToString("C")</div>
+                    </div>
+                    <div class="d-flex gap-2 flex-nowrap">
+                        <a href="/Checkout?businessId=@biz.Business.Id" class="btn btn-success btn-sm rounded-pill px-3 py-2">
+                            Pay Online
+                        </a>
+                        <form method="post" asp-action="MarkBusinessAsCash" asp-controller="Customer">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="businessId" value="@biz.Business.Id" />
+                            <button type="submit" class="btn btn-outline-dark btn-sm rounded-pill px-3 py-2">
+                                Pay in Cash
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
         </div>
-        <a href="/Checkout" class="btn btn-success btn-lg">
-            Checkout <i class="bi bi-arrow-right"></i>
-        </a>
     }
+
+
 </div>
 
 @section Scripts {
     <script>
+               function filterAppointments(filter) {
+            document.querySelectorAll('.appointment-card').forEach(card => {
+                const status = card.getAttribute('data-status');
+                card.style.display = (filter === "all")
+                    ? (status !== "completed" ? '' : 'none')
+                    : (status === filter ? '' : 'none');
+            });
+
+            // Toggle entire checkout section (including alert and bars)
+            const checkoutSection = document.querySelector('.checkout-section');
+            if (checkoutSection) {
+                checkoutSection.style.display = (filter === "confirmed") ? 'block' : 'none';
+            }
+        }
+
+
         document.querySelectorAll('#appointmentTabs button').forEach(btn => {
             btn.addEventListener('click', function () {
                 document.querySelectorAll('#appointmentTabs button').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-
-                const selectedId = this.getAttribute('data-business-id');
-
-                document.querySelectorAll('.appointment-card').forEach(card => {
-                    const bizId = card.getAttribute('data-business-id');
-                    if (selectedId === "all" || bizId === selectedId) {
-                        card.style.display = '';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
+                filterAppointments(this.getAttribute('data-filter'));
             });
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            filterAppointments("all");
         });
     </script>
 }

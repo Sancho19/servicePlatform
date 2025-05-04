@@ -29,11 +29,24 @@ namespace BeautyPlatform.Controllers
                 .Include(a => a.Service)
                     .ThenInclude(s => s.BusinessProfile)
                 .Include(a => a.User)
-                .Where(a => a.UserId == user.Id)
+                .Where(a => a.UserId == user.Id )
                 .ToListAsync();
 
             return View(appointments);
 
+        }
+        public async Task<IActionResult> AppointmentHistory()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var appointments = await _context.Appointments
+                .Include(a => a.Service)
+                    .ThenInclude(s => s.BusinessProfile)
+                .Include(a => a.User)
+                .Where(a => a.UserId == user.Id && a.Status == "Completed")
+                .ToListAsync();
+
+            return View(appointments);
         }
 
 
@@ -82,6 +95,47 @@ namespace BeautyPlatform.Controllers
             TempData["ScrollPosition"] = scrollPosition;
             return Redirect(Request.Headers["Referer"].ToString());
         }
+        [HttpPost]
+        public async Task<IActionResult> AddToCartAjax([FromBody] AddToCartRequest request)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (request.Quantity <= 0)
+            {
+                request.Quantity = 1;
+            }
+
+            var existingItem = await _context.CartItems
+                .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == request.ProductId);
+
+            if (existingItem != null)
+            {
+                existingItem.Quantity += request.Quantity;
+            }
+            else
+            {
+                _context.CartItems.Add(new CartItem
+                {
+                    ProductId = request.ProductId,
+                    UserId = userId,
+                    Quantity = request.Quantity
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            var newCount = await _context.CartItems
+                .Where(c => c.UserId == userId)
+                .SumAsync(c => c.Quantity);
+
+            return Json(new { success = true, count = newCount });
+        }
+
+        public class AddToCartRequest
+        {
+            public int ProductId { get; set; }
+            public int Quantity { get; set; }
+        }
 
 
 
@@ -95,7 +149,32 @@ namespace BeautyPlatform.Controllers
 
             return Json(new { count });
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkBusinessAsCash(int businessId)
+        {
+            var userId = _userManager.GetUserId(User);
 
+            var appointments = await _context.Appointments
+                .Include(a => a.Service)
+            .ThenInclude(s => s.BusinessProfile)
+                .Where(a => a.UserId == userId
+                         && a.Status == "Confirmed"
+                         && a.PaymentMethod == "Unpaid"
+                         && a.Service.BusinessProfileId == businessId)
+                .ToListAsync();
+
+            foreach (var appt in appointments)
+            {
+                appt.PaymentMethod = "Cash";
+            }
+
+            await _context.SaveChangesAsync();
+            var businessName = appointments.FirstOrDefault()?.Service?.BusinessProfile?.BusinessName ?? "the selected business";
+            TempData["Success"] = $"You selected to pay in cash for services booked at {businessName}.";
+
+            return RedirectToAction("MyAppointments");
+        }
 
 
         [HttpPost("Customer/RemoveFromCart/{id}")]
@@ -145,7 +224,8 @@ namespace BeautyPlatform.Controllers
             {
                 UserId = userId,
                 ServiceId = ServiceId,
-                AppointmentDateTime = appointmentDateTime
+                AppointmentDateTime = appointmentDateTime,
+                PaymentMethod = "Unpaid" // add this to be safe
             };
 
             _context.Appointments.Add(appointment);

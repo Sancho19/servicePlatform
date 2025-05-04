@@ -27,7 +27,11 @@
                         <th>Date</th>
                         <th>Time</th>
                         <th>Status</th>
+                        <th>Payment</th>
                         <th style="min-width: 160px;">Action</th>
+                       
+
+
                     </tr>
                 </thead>
                 <tbody>
@@ -39,9 +43,13 @@
                             <td>@appt.AppointmentDateTime.ToString("dd MMM yyyy")</td>
                             <td>@appt.AppointmentDateTime.ToString("hh:mm tt")</td>
                             <td>
-                                <span class="badge rounded-pill bg-@(appt.Status == "Confirmed" ? "success" : "warning") px-3 py-2">
+                                <span class="badge rounded-pill px-3 py-2
+    @(appt.Status == "Confirmed" ? "bg-success" :
+      appt.Status == "Pending" ? "bg-warning text-dark" :
+      "bg-secondary")">
                                     @appt.Status
                                 </span>
+
                             </td>
                             <td>
                                 <form asp-action="UpdateAppointmentStatus" method="post" class="d-flex align-items-center justify-content-center gap-2">
@@ -50,12 +58,20 @@
                                     <select name="newStatus" class="form-select form-select-sm" style="width: auto;">
                                         <option value="Pending" selected="@(appt.Status == "Pending")">Pending</option>
                                         <option value="Confirmed" selected="@(appt.Status == "Confirmed")">Confirmed</option>
+                                        <option value="Completed" selected="@(appt.Status == "Completed")">Completed</option>
                                     </select>
                                     <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="submit">
                                         Save
                                     </button>
                                 </form>
                             </td>
+                            <td>
+                                <span class="badge rounded-pill bg-light text-dark border">
+                                    @(string.IsNullOrEmpty(appt.PaymentMethod) ? "Unpaid" : appt.PaymentMethod)
+                                </span>
+
+                            </td>
+
                         </tr>
                     }
                 </tbody>

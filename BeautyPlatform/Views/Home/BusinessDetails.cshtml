@@ -1,4 +1,11 @@
 ﻿@model BeautyPlatform.Models.BusinessProfile
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var tokens = Antiforgery.GetTokens(ViewContext.HttpContext);
+}
+
+
+
 
 @{
     ViewData["Title"] = @Model.BusinessName;
@@ -72,6 +79,17 @@
 
     </form>
 
+    <!-- Toast Notification -->
+    <div id="cartToast" class="toast align-items-center text-bg-success border-0 position-fixed bottom-0 end-0 m-4 z-3"
+         role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 250px; display: none;">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold">
+                Product added to cart!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast" aria-label="Close" onclick="hideToast()"></button>
+        </div>
+    </div>
 
 
     <!-- Products Grid -->
@@ -100,29 +118,28 @@
                             @product.Price.ToString("C")
                         </p>
                         <!-- Add to Cart Button + Quantity -->
-                       <form action="/Customer/AddToCart" method="post">
-    @Html.AntiForgeryToken()
-    <input type="hidden" name="productId" value="@product.Id" />
-                            <input type="hidden" name="scrollPosition" class="scroll-input" />
 
+                        <input type="hidden" id="token-@product.Id" value="@tokens.RequestToken" />
 
+                        <input type="hidden" id="scroll-@product.Id" class="scroll-input" />
 
-    <!-- Quantity Section -->
-    <div class="mt-1">
-        <div class="d-flex justify-content-center align-items-center mb-2">
-            <button type="button" class="btn text-danger border-0 fs-2 px-1" onclick="updateQuantity('product-qty-@product.Id', -1)">−</button>
-            <input type="text" id="product-qty-@product.Id" name="quantity" value="1" readonly
-                   class="form-control text-center mx-1 border-0 focus-none shadow-none"
-                   style="width: 50px; background-color: transparent" />
-            <button type="button" class="btn text-success border-0 fs-2 px-1" onclick="updateQuantity('product-qty-@product.Id', 1)">+</button>
-        </div>
+                        <!-- Quantity Controls (same as before) -->
+                        <div class="mt-1">
+                            <div class="d-flex justify-content-center align-items-center mb-2">
+                                <button type="button" class="btn text-danger border-0 fs-2 px-1" onclick="updateQuantity('product-qty-@product.Id', -1)">−</button>
+                                <input type="text" id="product-qty-@product.Id" value="1" readonly
+                                       class="form-control text-center mx-1 border-0 focus-none shadow-none"
+                                       style="width: 50px; background-color: transparent" />
+                                <button type="button" class="btn text-success border-0 fs-2 px-1" onclick="updateQuantity('product-qty-@product.Id', 1)">+</button>
+                            </div>
 
-        <!-- Add to Cart Button -->
-        <button class="btn btn-dark w-100" type="submit">
-            Add to Cart
-        </button>
-    </div>
-</form>
+                            <!-- Add to Cart AJAX Button -->
+                            <button type="button" class="btn btn-dark w-100"
+                                    onclick="addToCartAjax(@product.Id)">
+                                Add to Cart
+                            </button>
+                        </div>
+
 
 
 
@@ -150,7 +167,7 @@
                                  alt="@service.Name"
                                  class="rounded"
                                  style="width: 150px; height: 120px; object-fit: cover; cursor: pointer;"
-                                 onclick="openItemModal('@service.Name', '@service.Description', '@service.Price.ToString("C")', '@service.ImageUrl', @service.Id)" />
+                                />
                         </div>
 
                         <!-- Right: Text content -->
@@ -325,6 +342,9 @@
             .then(data => {
                 if (data.success) {
                     updateCartCount();
+                             showToast();
+                                     const modal = bootstrap.Modal.getInstance(document.getElementById('itemModal'));
+                modal.hide();
                 } else {
                     alert('Failed to add to cart.');
                 }
@@ -361,6 +381,49 @@
                     alert('Something went wrong.');
                 }
             });
+        }
+                function addToCartAjax(productId) {
+            const qty = parseInt(document.getElementById(`product-qty-${productId}`).value) || 1;
+            const scrollY = window.scrollY || window.pageYOffset;
+            const token = document.getElementById(`token-${productId}`).value;
+
+            fetch('/Customer/AddToCartAjax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    quantity: qty,
+                    scrollPosition: scrollY.toString()
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartCount();
+                             showToast();
+                                     const modal = bootstrap.Modal.getInstance(document.getElementById('itemModal'));
+                modal.hide();
+                } else {
+                    alert('Failed to add to cart.');
+                }
+            });
+        }
+                function showToast() {
+            const toastEl = document.getElementById('cartToast');
+            toastEl.style.display = 'block';
+
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                hideToast();
+            }, 3000);
+        }
+
+        function hideToast() {
+            const toastEl = document.getElementById('cartToast');
+            toastEl.style.display = 'none';
         }
 
 
@@ -481,6 +544,31 @@
             var itemModal = new bootstrap.Modal(document.getElementById('itemModal'));
             itemModal.show();
         }
+                      document.getElementById('addToCartButton').addEventListener('click', function () {
+            const productId = selectedItemId;
+            const quantity = parseInt(document.getElementById('modalQtyInput').value);
+
+            fetch('/Customer/AddToCartAjax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ productId, quantity })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartCount();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('itemModal'));
+                    modal.hide();
+                } else {
+                    alert('Failed to add to cart.');
+                }
+            });
+        });
+
+
 
         window.addEventListener('DOMContentLoaded', function () {
             const scrollY = '@TempData["ScrollPosition"]';
