@@ -55,11 +55,22 @@ namespace BeautyPlatform.Controllers
             var userId = _userManager.GetUserId(User);
             var cartItems = await _context.CartItems
                 .Include(c => c.Product)
+                    .ThenInclude(p => p.BusinessProfile) // ✅ This is required
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
 
-            return View(cartItems);
+            var grouped = cartItems
+                .GroupBy(c => c.Product.BusinessProfile)
+                .Select(g => new CartGroupByBusiness
+                {
+                    Business = g.Key,
+                    Items = g.ToList()
+                })
+                .ToList();
+
+            return View(grouped);
         }
+
 
 
         [HttpPost]
@@ -175,6 +186,30 @@ namespace BeautyPlatform.Controllers
 
             return RedirectToAction("MyAppointments");
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkCartAsCash(int businessId)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var items = await _context.CartItems
+                .Include(c => c.Product)
+                .ThenInclude(p => p.BusinessProfile)
+                .Where(c => c.UserId == userId && c.Product.BusinessProfileId == businessId)
+                .ToListAsync();
+
+            if (!items.Any())
+            {
+                TempData["SuccessMessage"] = "No items found for this vendor.";
+                return RedirectToAction("Cart");
+            }
+
+            // Optional: You could later convert these into an Order with PaymentMethod = Cash
+
+            TempData["SuccessMessage"] = $"You selected to pay in cash for products from {items.First().Product.BusinessProfile.BusinessName}.";
+            return RedirectToAction("Cart");
+        }
+
 
 
         [HttpPost("Customer/RemoveFromCart/{id}")]
@@ -184,16 +219,38 @@ namespace BeautyPlatform.Controllers
             var userId = _userManager.GetUserId(User);
 
             var item = await _context.CartItems
+                .Include(c => c.Product)
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
 
             if (item != null)
             {
+                var businessId = item.Product.BusinessProfileId;
+
                 _context.CartItems.Remove(item);
                 await _context.SaveChangesAsync();
+
+                var remainingCount = await _context.CartItems
+                    .Where(c => c.UserId == userId && c.Product.BusinessProfileId == businessId)
+                    .CountAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    businessId = businessId,
+                    remainingCount = remainingCount
+                });
             }
 
-            return Json(new { success = true });
+            // Return dummy response so frontend still works
+            return Json(new
+            {
+                success = false,
+                businessId = 0,
+                remainingCount = 0
+            });
         }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAppointment(int ServiceId, DateTime AppointmentDate, TimeSpan AppointmentTime, string ScrollPosition)
@@ -246,6 +303,16 @@ namespace BeautyPlatform.Controllers
             return Json(new { total });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetBusinessCartTotal(int businessId)
+        {
+            var userId = _userManager.GetUserId(User);
+            var total = await _context.CartItems
+                .Where(c => c.UserId == userId && c.Product.BusinessProfileId == businessId)
+                .SumAsync(c => c.Product.Price * c.Quantity);
+
+            return Json(new { total });
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetAppointmentCount()
@@ -290,15 +357,24 @@ namespace BeautyPlatform.Controllers
                 item.Quantity = request.Quantity > 0 ? request.Quantity : 1;
                 await _context.SaveChangesAsync();
 
-                var updatedTotal = await _context.CartItems
+                // Grand total for the entire cart
+                var grandTotal = await _context.CartItems
                     .Where(c => c.UserId == userId)
+                    .SumAsync(c => c.Product.Price * c.Quantity);
+
+                // Subtotal for this item's business
+                var businessId = item.Product.BusinessProfileId;
+                var businessTotal = await _context.CartItems
+                    .Where(c => c.UserId == userId && c.Product.BusinessProfileId == businessId)
                     .SumAsync(c => c.Product.Price * c.Quantity);
 
                 return Json(new
                 {
                     success = true,
                     itemTotal = item.Product.Price * item.Quantity,
-                    grandTotal = updatedTotal
+                    grandTotal = grandTotal,
+                    businessId = businessId,
+                    businessTotal = businessTotal
                 });
             }
 
@@ -311,7 +387,13 @@ namespace BeautyPlatform.Controllers
             public int Quantity { get; set; }
         }
 
+        public class CartGroupByBusiness
+        {
+            public BusinessProfile Business { get; set; }
+            public List<CartItem> Items { get; set; }
 
+            public decimal Total => Items.Sum(i => i.Product.Price * i.Quantity);
+        }
 
 
     }

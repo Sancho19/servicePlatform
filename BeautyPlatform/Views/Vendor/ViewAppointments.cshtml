@@ -1,7 +1,12 @@
 ﻿@model List<BeautyPlatform.Models.Appointment>
+@using System.Globalization
+
 
 @{
     ViewData["Title"] = "Service Appointments";
+
+    var services = Model.Select(a => a.Service.Name).Distinct().ToList();
+    var customers = Model.Select(a => a.User.FullName).Distinct().ToList();
 }
 
 <div class="container my-5">
@@ -9,8 +14,11 @@
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success text-center">@TempData["Success"]</div>
+        <div id="successMessage" class="alert alert-success text-center">
+            @TempData["Success"]
+        </div>
     }
+
 
     @if (!Model.Any())
     {
@@ -18,65 +26,153 @@
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table align-middle table-bordered table-striped shadow-sm rounded overflow-hidden">
-                <thead class="table-dark text-center">
-                    <tr>
-                        <th>Customer</th>
-                        <th>Service</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Status</th>
-                        <th>Payment</th>
-                        <th style="min-width: 160px;">Action</th>
-                       
+        <!-- Filter Section -->
+        <div class="mb-4 d-flex justify-content-center gap-3 flex-wrap">
+            <!-- Status Filter -->
+            <select id="statusFilter" class="form-select form-select-sm w-auto">
+                <option value="all">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Confirmed">Confirmed</option>
+                <option value="Completed">Completed</option>
+            </select>
+            <select id="serviceFilter" class="form-select form-select-sm w-auto">
+                <option value="all">All Services</option>
+                @foreach (var service in services)
+                {
+                    <option value="@service">@service</option>
+                }
+            </select>
 
+            <select id="customerFilter" class="form-select form-select-sm w-auto">
+                <option value="all">All Customers</option>
+                @foreach (var customer in customers)
+                {
+                    var displayName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(customer.ToLower());
+                    <option value="@customer">@displayName</option>
+                }
+            </select>
+            <!-- Date Filters -->
+            <input type="date" id="fromDate" class="form-control form-control-sm w-auto" placeholder="From" />
+            <input type="date" id="toDate" class="form-control form-control-sm w-auto" placeholder="To" />
 
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var appt in Model)
-                    {
-                        <tr class="text-center">
-                            <td class="fw-semibold">@appt.User.FullName</td>
-                            <td>@appt.Service.Name</td>
-                            <td>@appt.AppointmentDateTime.ToString("dd MMM yyyy")</td>
-                            <td>@appt.AppointmentDateTime.ToString("hh:mm tt")</td>
-                            <td>
+            
+            <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">Reset</button>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 g-4" id="appointmentsContainer">
+            @foreach (var appt in Model)
+            {
+                <div class="col appointment-card" 
+                     data-service="@appt.Service.Name"
+                     data-customer="@appt.User.FullName"
+                     data-status="@appt.Status"
+                     data-date="@appt.AppointmentDateTime.ToString("yyyy-MM-dd")">
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">@appt.Service.Name</h5>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Customer:</span> @CultureInfo.CurrentCulture.TextInfo.ToTitleCase(appt.User.FullName.ToLower())
+
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Date:</span> @appt.AppointmentDateTime.ToString("dd MMM yyyy")
+                            </p>
+                            <p class="mb-2">
+                                <span class="fw-semibold">Time:</span> @appt.AppointmentDateTime.ToString("hh:mm tt")
+                            </p>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <!-- Status Badge -->
                                 <span class="badge rounded-pill px-3 py-2
-    @(appt.Status == "Confirmed" ? "bg-success" :
-      appt.Status == "Pending" ? "bg-warning text-dark" :
-      "bg-secondary")">
+                                    @(appt.Status == "Confirmed" ? "bg-success" :
+                                      appt.Status == "Pending" ? "bg-warning text-dark" :
+                                      "bg-secondary")">
                                     @appt.Status
                                 </span>
 
-                            </td>
-                            <td>
-                                <form asp-action="UpdateAppointmentStatus" method="post" class="d-flex align-items-center justify-content-center gap-2">
+                                <!-- Payment Badge -->
+                                <span class="badge rounded-pill bg-light text-dark border">
+                                    @(appt.Status == "Completed" ? "Paid" : string.IsNullOrEmpty(appt.PaymentMethod) ? "Unpaid" : appt.PaymentMethod)
+                                </span>
+
+                            </div>
+
+                            <!-- Status Update -->
+                            <div class="mt-3">
+                                <form asp-action="UpdateAppointmentStatus" method="post" class="d-flex gap-2 align-items-center">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="appointmentId" value="@appt.Id" />
-                                    <select name="newStatus" class="form-select form-select-sm" style="width: auto;">
+                                    <select name="newStatus" class="form-select form-select-sm w-auto">
                                         <option value="Pending" selected="@(appt.Status == "Pending")">Pending</option>
                                         <option value="Confirmed" selected="@(appt.Status == "Confirmed")">Confirmed</option>
                                         <option value="Completed" selected="@(appt.Status == "Completed")">Completed</option>
                                     </select>
-                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="submit">
+                                    <button class="btn btn-outline-primary btn-sm rounded-pill" type="submit">
                                         Save
                                     </button>
                                 </form>
-                            </td>
-                            <td>
-                                <span class="badge rounded-pill bg-light text-dark border">
-                                    @(string.IsNullOrEmpty(appt.PaymentMethod) ? "Unpaid" : appt.PaymentMethod)
-                                </span>
-
-                            </td>
-
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
-
     }
 </div>
+
+@section Scripts {
+    <script>
+              function filterAppointments() {
+            const serviceFilter = document.getElementById('serviceFilter').value.toLowerCase();
+            const customerFilter = document.getElementById('customerFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+
+            document.querySelectorAll('.appointment-card').forEach(card => {
+                const service = card.getAttribute('data-service').toLowerCase();
+                const customer = card.getAttribute('data-customer').toLowerCase();
+                const status = card.getAttribute('data-status').toLowerCase();
+                const date = card.getAttribute('data-date');
+
+                const matchesService = (serviceFilter === 'all' || service.includes(serviceFilter));
+                const matchesCustomer = (customerFilter === 'all' || customer.includes(customerFilter));
+                const matchesStatus = (statusFilter === 'all' || status === statusFilter);
+
+                let matchesDate = true;
+                if (fromDate) matchesDate = matchesDate && (date >= fromDate);
+                if (toDate) matchesDate = matchesDate && (date <= toDate);
+
+                if (matchesService && matchesCustomer && matchesStatus && matchesDate) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+             setTimeout(() => {
+            const msg = document.getElementById("successMessage");
+            if (msg) {
+                msg.style.transition = "opacity 0.5s ease-out";
+                msg.style.opacity = "0";
+                setTimeout(() => msg.remove(), 500); 
+            }
+        }, 3000);
+
+                  function resetFilters() {
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('serviceFilter').value = 'all';
+            document.getElementById('customerFilter').value = 'all';
+            document.getElementById('fromDate').value = '';
+            document.getElementById('toDate').value = '';
+            filterAppointments();
+        }
+
+            document.getElementById('serviceFilter').addEventListener('change', filterAppointments);
+        document.getElementById('customerFilter').addEventListener('change', filterAppointments);
+        document.getElementById('statusFilter').addEventListener('change', filterAppointments);
+                document.getElementById('fromDate').addEventListener('change', filterAppointments);
+        document.getElementById('toDate').addEventListener('change', filterAppointments);
+    </script>
+}

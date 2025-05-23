@@ -1,7 +1,7 @@
-﻿@model List<BeautyPlatform.Models.CartItem>
+﻿@model List<BeautyPlatform.Controllers.CustomerController.CartGroupByBusiness>
+
 @{
     ViewData["Title"] = "My Cart";
-    var grandTotal = Model.Sum(item => item.Product.Price * item.Quantity);
 }
 
 <div class="container py-5">
@@ -13,109 +13,134 @@
             @TempData["SuccessMessage"]
         </div>
     }
-
     @if (!Model.Any())
     {
-        <div class="alert alert-info text-center">Your cart is empty.</div>
+        <div id="empty-cart-message" class="alert alert-info text-center">
+            Your cart is empty.
+        </div>
     }
     else
     {
+        <div id="empty-cart-message" class="alert alert-info text-center" style="display: none;">
+            Your cart is empty.
+        </div>
+
         <form id="cartForm" method="post">
             @Html.AntiForgeryToken()
 
-            <div class="row gy-4">
-                @foreach (var item in Model)
-                {
-                    <div class="col-12">
-                        <div class="card border-0 shadow-sm rounded-4 p-3" data-item-id="@item.Id">
-                            <div class="row g-3 align-items-center">
-                                <!-- Product Image -->
-                                <div class="col-3 col-md-2">
-                                    <img src="@item.Product.ImageUrl" alt="@item.Product.Name"
-                                         class="img-fluid rounded-3"
-                                         style="height: 100px; width: 100%; object-fit: cover;" />
-                                </div>
+            @foreach (var group in Model)
+            {
+                <div class="mb-4" id="cart-group-@group.Business.Id">
+                    <div class="fw-bold text-dark mb-2 ms-1" style="font-size: 1rem;" id="business-name-@group.Business.Id">
+                        @group.Business.BusinessName
+                    </div>
 
-                                <!-- Product Info & Controls -->
-                                <div class="col-9 col-md-6">
-                                    <h5 class="fw-semibold mb-1">@item.Product.Name</h5>
-                                    <p class="text-muted small mb-1">Price: @item.Product.Price.ToString("C")</p>
 
-                                    <!-- Quantity Controls (Minimalist Style) -->
-                                    <div class="d-flex justify-content-start align-items-center mb-2">
-                                        <button type="button"
-                                                class="btn text-danger border-0 fs-3 px-2"
-                                                onclick="changeQuantity(@item.Id, -1)">
-                                            −
-                                        </button>
-
-                                        <input type="text"
-                                               id="qty-@item.Id"
-                                               class="form-control text-center mx-1 border-0 shadow-none"
-                                               value="@item.Quantity"
-                                               readonly
-                                               style="width: 50px; background-color: transparent; font-weight: 600;" />
-
-                                        <button type="button"
-                                                class="btn text-success border-0 fs-3 px-2"
-                                                onclick="changeQuantity(@item.Id, 1)">
-                                            +
-                                        </button>
-                                    </div>
-
-                                </div>
-
-                                <!-- Price & Remove -->
-                                <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
-                                    <div class="d-flex justify-content-between justify-content-md-end align-items-center gap-3">
-                                        <div>
-                                            <strong id="item-total-@item.Id" class="text- fs">
-                                                @((item.Product.Price * item.Quantity).ToString("C"))
-                                            </strong>
+                    <div class="row gy-3">
+                        @foreach (var item in group.Items)
+                        {
+                            <div class="col-12" data-item-id="@item.Id" data-business-id="@group.Business.Id">
+                                <div class="card border-0 shadow-sm rounded-4 p-3">
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-3 col-md-2">
+                                            <img src="@item.Product.ImageUrl" class="img-fluid rounded-3"
+                                                 style="height: 100px; object-fit: cover;" alt="@item.Product.Name" />
                                         </div>
-                                        <div>
-                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                    onclick="removeCartItem(@item.Id)">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                        <div class="col-9 col-md-6">
+                                            <h6 class="fw-semibold mb-1">@item.Product.Name</h6>
+                                            <p class="text-muted small mb-1">Price: @item.Product.Price.ToString("C")</p>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <button type="button" class="btn text-danger border-0 fs-3 px-2"
+                                                        onclick="changeQuantity(@item.Id, -1)">
+                                                    −
+                                                </button>
+                                                <input type="text" id="qty-@item.Id" value="@item.Quantity"
+                                                       class="form-control text-center mx-1 border-0 shadow-none"
+                                                       readonly style="width: 50px; background: transparent; font-weight: 600;" />
+                                                <button type="button" class="btn text-success border-0 fs-3 px-2"
+                                                        onclick="changeQuantity(@item.Id, 1)">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+                                            <div class="d-flex justify-content-between justify-content-md-end gap-3">
+                                                <div>
+                                                    <strong id="item-total-@item.Id">
+                                                        @((item.Product.Price * item.Quantity).ToString("C"))
+                                                    </strong>
+                                                </div>
+                                                <div>
+                                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                                            onclick="removeCartItem(@item.Id)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        }
                     </div>
-                }
-            </div>
 
+                    <hr class="my-4" />
+                </div>
+            }
 
-            <!-- Sticky Total Section -->
-            <div class="bg-white border-top shadow-sm mt-4 pt-4 pb-3 sticky-bottom">
-                <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <h4 class="mb-0 fw-bold">
-                        Total: <span id="grand-total">@grandTotal.ToString("C")</span>
-                    </h4>
-                    <a href="/Checkout" class="btn btn-success btn-lg rounded-pill px-4">
-                        Checkout <i class="bi bi-arrow-right"></i>
-                    </a>
+            @if (Model.Count > 1)
+            {
+                <div id="multi-vendor-alert" class="alert alert-info text-center fw-semibold" style="margin-bottom: 7rem;">
+                    You have items in your cart from multiple vendors. Please complete a separate checkout for each.
+                </div>
+            }
+
+            <div class="checkout-section bg-white border-top shadow-sm pt-3 pb-3 sticky-bottom">
+                <div class="container">
+                    @foreach (var group in Model)
+                    {
+                        <div id="checkout-bar-@group.Business.Id">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 px-2">
+                                <div>
+                                    <div class="fw-semibold text-dark small">Business:</div>
+                                    <div class="fw-bold">@group.Business.BusinessName</div>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-dark small">Total:</div>
+                                    <div class="fw-bold" id="business-total-@group.Business.Id">@group.Total.ToString("C")</div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="/Checkout?businessId=@group.Business.Id" class="btn btn-success btn-sm rounded-pill px-3">
+                                        Pay Online
+                                    </a>
+                                    <form method="post" asp-action="MarkCartAsCash" asp-controller="Customer">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="businessId" value="@group.Business.Id" />
+                                        <button type="submit" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                                            Pay in Cash
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <hr />
+                        </div>
+                    }
                 </div>
             </div>
 
         </form>
-
     }
 </div>
+
+<!-- Toast -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
-    <div id="toastRemoved" class="toast align-items-center text-white bg-danger border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+    <div id="toastRemoved" class="toast text-white bg-danger border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
-            <div class="toast-body fw-semibold">
-                Item removed from cart.
-            </div>
+            <div class="toast-body fw-semibold">Item removed from cart.</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
 </div>
-
-
 
 @section Scripts {
     <script>
@@ -123,34 +148,13 @@
             return document.querySelector('input[name="__RequestVerificationToken"]').value;
         }
 
-        function removeCartItem(itemId) {
-            fetch(`/Customer/RemoveFromCart/${itemId}`, {
-                method: 'POST',
-                headers: {
-                    'RequestVerificationToken': getAntiForgeryToken()
-                }
-            }).then(res => res.json())
-              .then(data => {
-                  if (data.success) {
-                      const itemCard = document.querySelector(`[data-item-id="${itemId}"]`);
-                      if (itemCard) itemCard.remove();
-
-                      showToast('toastRemoved');
-                      recalculateGrandTotal();
-                  } else {
-                      alert('Failed to remove item.');
-                  }
-              });
-        }
-                   function changeQuantity(itemId, delta) {
+        function changeQuantity(itemId, delta) {
             const input = document.getElementById(`qty-${itemId}`);
             let qty = parseInt(input.value) || 1;
             qty = Math.max(1, qty + delta);
             input.value = qty;
             updateCartItem(itemId, qty);
         }
-
-
 
         function updateCartItem(itemId, quantity) {
             fetch('/Customer/UpdateCartItemAjax', {
@@ -159,33 +163,96 @@
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': getAntiForgeryToken()
                 },
-                body: JSON.stringify({ itemId, quantity: parseInt(quantity) })
+                body: JSON.stringify({ itemId, quantity })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     document.getElementById(`item-total-${itemId}`).textContent = formatCurrency(data.itemTotal);
-                    document.getElementById('grand-total').textContent = formatCurrency(data.grandTotal);
+                    const businessTotalEl = document.getElementById(`business-total-${data.businessId}`);
+                    if (businessTotalEl) {
+                        businessTotalEl.textContent = formatCurrency(data.businessTotal);
+                    }
                 } else {
                     alert("Failed to update cart.");
                 }
             });
         }
+                      function removeCartItem(itemId) {
+            const card = document.querySelector(`[data-item-id="${itemId}"]`);
+            const businessId = card ? card.getAttribute("data-business-id") : null;
 
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
+            fetch(`/Customer/RemoveFromCart/${itemId}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': getAntiForgeryToken()
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (card) card.remove();
+
+                    const bId = data.businessId || businessId;
+                    if (bId) {
+                        if (data.remainingCount === 0) {
+                            const cartGroup = document.getElementById(`cart-group-${bId}`);
+                            if (cartGroup) cartGroup.remove();
+
+                            const bar = document.getElementById(`checkout-bar-${bId}`);
+                            if (bar) bar.remove();
+                        } else {
+                            recalculateBusinessTotal(bId);
+                        }
+                    }
+
+                    // Hide multi-vendor alert if only one vendor remains
+                    const remainingVendors = document.querySelectorAll('[id^="checkout-bar-"]');
+                    const alertBox = document.getElementById('multi-vendor-alert');
+                    if (alertBox && remainingVendors.length <= 1) {
+                        alertBox.remove();
+                    }
+
+                    // Show empty cart message if no items are left
+                    const allGroups = document.querySelectorAll('[id^="cart-group-"]');
+                    const emptyCartMsg = document.getElementById('empty-cart-message');
+                    if (emptyCartMsg && allGroups.length === 0) {
+                        emptyCartMsg.style.display = 'block';
+                    }
+
+                    showToast('toastRemoved');
+                } else {
+                    alert("Failed to remove item.");
+                }
+            });
         }
 
-        function recalculateGrandTotal() {
-            fetch('/Customer/GetCartTotal')
+
+
+        function recalculateBusinessTotal(businessId) {
+            fetch(`/Customer/GetBusinessCartTotal?businessId=${businessId}`)
                 .then(res => res.json())
                 .then(data => {
-                    document.getElementById('grand-total').textContent = formatCurrency(data.total);
+                    const el = document.getElementById(`business-total-${businessId}`);
+                    if (el) el.textContent = formatCurrency(data.total);
+
+                    // Optional: Remove checkout bar if business total is 0
+                    if (data.total <= 0) {
+                        const bar = document.getElementById(`checkout-bar-${businessId}`);
+                        if (bar) bar.remove();
+                    }
                 });
         }
 
-        function showToast(toastId) {
-            const toastEl = document.getElementById(toastId);
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-ZA', {
+                style: 'currency',
+                currency: 'ZAR'
+            }).format(amount);
+        }
+
+        function showToast(id) {
+            const toastEl = document.getElementById(id);
             const toast = new bootstrap.Toast(toastEl);
             toast.show();
         }
